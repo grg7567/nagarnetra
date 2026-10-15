@@ -1,0 +1,25 @@
+# Render Blueprint: New > Blueprint > pick this repo. Render asks for the values marked sync: false.
+services:
+  - type: web
+    name: nagarnetra
+    runtime: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL          # Supabase > Connect > Session pooler URI (port 5432)
+        sync: false
+      - key: WATSONX_APIKEY        # IBM Cloud > Manage > Access (IAM) > API keys
+        sync: false
+      - key: WATSONX_PROJECT_ID    # watsonx.ai project > Manage > General > Project ID
+        sync: false
+      - key: WATSONX_URL
+        value: https://us-south.ml.cloud.ibm.com
+      - key: ADMIN_EMAIL
+        value: admin@nagarnetra.app
+      - key: ADMIN_PASSWORD        # generated; read it in Render > Environment
+        generateValue: true
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SEED_DEMO
+        value: "true"

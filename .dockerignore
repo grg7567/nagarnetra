@@ -1,0 +1,11 @@
+.venv
+**/__pycache__
+**/node_modules
+frontend/dist
+backend/nagarnetra.db
+backend/tests
+data_raw
+tools
+*.log
+.env
+.git

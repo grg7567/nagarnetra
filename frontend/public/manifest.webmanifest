@@ -1,0 +1,10 @@
+{
+  "name": "NagarNetra Ahmedabad",
+  "short_name": "NagarNetra",
+  "description": "Report civic issues in Ahmedabad with one photo.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F3F2EE",
+  "theme_color": "#1F2328",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
