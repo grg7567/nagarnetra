@@ -77,7 +77,7 @@ async def _vision_model(client: httpx.AsyncClient) -> str:
 
 
 PROVIDER_LABEL = {"gemini": "Google Gemini", "watsonx": "IBM watsonx.ai"}
-GEMINI_FALLBACK = "gemini-2.5-flash"
+GEMINI_FALLBACKS = ["gemini-2.5-flash", "gemini-flash-lite-latest", "gemini-2.5-flash-lite"]
 
 
 async def _chat(content: list | str, max_tokens: int = 900) -> str:
@@ -104,12 +104,14 @@ async def _chat_gemini(content: list | str, max_tokens: int) -> str:
     }
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(90, connect=15)) as client:
-            model = settings.gemini_model
-            for attempt in (model, GEMINI_FALLBACK):
+            # Missing or overloaded models move on to the next one.
+            models = list(dict.fromkeys([settings.gemini_model, *GEMINI_FALLBACKS]))
+            for attempt in models:
                 r = await client.post(f"https://generativelanguage.googleapis.com/v1beta/models/{attempt}:generateContent",
                                       headers={"x-goog-api-key": settings.gemini_api_key}, json=body)
-                if r.status_code != 404 or attempt == GEMINI_FALLBACK:
+                if r.status_code not in (404, 429, 500, 502, 503, 504):
                     break
+                log.warning("Gemini %s returned HTTP %s, trying next model", attempt, r.status_code)
             if r.status_code != 200:
                 hint = " Check GEMINI_API_KEY." if r.status_code in (400, 401, 403) else ""
                 raise AIUnavailable(f"Gemini returned HTTP {r.status_code}.{hint} {r.text[:300]}")
