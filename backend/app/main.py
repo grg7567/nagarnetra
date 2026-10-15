@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import mimetypes
 import secrets
 import time
 from collections import defaultdict, deque
@@ -19,6 +20,9 @@ from .auth import check_pw, clear_session, current_user, get_db, hash_pw, requir
 from .civic import CATEGORIES, LANGUAGES, OPEN_STATUSES, SEVERITIES, STATUSES
 from .config import settings
 from .db import Event, Photo, SessionLocal, Ticket, User, as_utc, init_db, utcnow
+
+mimetypes.add_type("image/webp", ".webp")  # slim Docker images lack this mapping
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("nagarnetra")
