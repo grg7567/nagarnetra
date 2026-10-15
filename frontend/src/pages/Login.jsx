@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { Key, WarningCircle } from "@phosphor-icons/react";
 import { useApp } from "../App.jsx";
 import { api } from "../api.js";
 
@@ -22,23 +23,23 @@ export default function Login() {
   }
 
   return (
-    <div className="wrap" style={{ maxWidth: 440 }}>
-      <form className="panel stack" onSubmit={submit}>
-        <div className="stack" style={{ gap: 6 }}>
-          <p className="eyebrow">AMC officials</p>
-          <h1>Sign in</h1>
-          <p className="muted">For ward offices, department teams and administrators.</p>
+    <div className="wrap" style={{ maxWidth: 440, paddingTop: 24 }}>
+      <form className="card pad-lg stack" style={{ gap: 18 }} onSubmit={submit}>
+        <div className="stack-sm">
+          <h1 style={{ fontSize: 30 }}>Officials sign in</h1>
+          <p className="muted">For AMC ward offices, departments and administrators.</p>
         </div>
         {demo && (
-          <div className="notice stack" style={{ gap: 8 }}>
-            <p><strong>Demo login</strong><br /><span className="code">{demo.email}</span><br /><span className="code">{demo.password}</span></p>
+          <div className="msg info" style={{ display: "grid", gap: 10 }}>
+            <span className="row" style={{ gap: 8, fontWeight: 600, color: "var(--ink)" }}><Key size={18} />Demo access</span>
+            <span className="code">{demo.email}<br />{demo.password}</span>
             <div><button type="button" className="btn sm" onClick={() => { setEmail(demo.email); setPassword(demo.password); }}>Fill in demo login</button></div>
           </div>
         )}
-        <label className="field"><span>Email</span><input id="email" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} required /></label>
-        <label className="field"><span>Password</span><input id="password" type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
-        {error && <p className="error">{error}</p>}
-        <button className="btn primary" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
+        <label className="field"><span className="label">Email</span><input id="email" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} required /></label>
+        <label className="field"><span className="label">Password</span><input id="password" type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
+        {error && <p className="msg error"><WarningCircle size={18} weight="fill" /><span>{error}</span></p>}
+        <button className="btn primary lg" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
       </form>
     </div>
   );

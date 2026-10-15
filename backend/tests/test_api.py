@@ -86,6 +86,12 @@ def test_full_flow(client):
     assert m["merged"] and m["code"] == code and m["ticket"]["report_count"] == 2 and m["ticket"]["severity"] == "critical"
     assert client.get("/api/duplicates", params={"lat": LAT, "lng": LNG, "category": "pothole"}).json()[0]["code"] == code
 
+    # Citizen says "mine is different": no auto-merge even at the same spot.
+    fn = analyze(client).json()
+    sep = client.post("/api/reports", json={"upload_token": fn["upload_token"], "lat": LAT, "lng": LNG,
+                                             "category": "pothole", "severity": "low", "force_new": True}).json()
+    assert not sep["merged"] and sep["code"] != code
+
     # Different category at the same spot does not merge.
     c = analyze(client).json()
     n = client.post("/api/reports", json={"upload_token": c["upload_token"], "lat": LAT, "lng": LNG,
@@ -117,7 +123,7 @@ def test_full_flow(client):
     assert ro["status"] == "in_progress"
 
     st = client.get("/api/admin/stats").json()
-    assert st["open"] >= 2 and st["merged_reports"] == 1
+    assert st["open"] >= 3 and st["merged_reports"] == 1
 
     # Department official only sees their department.
     client.post("/api/admin/users", json={"email": "roads@test.in", "password": "roadsroads1", "department": "Engineering Dept. (Roads)"})

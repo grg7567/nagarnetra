@@ -99,6 +99,7 @@ def ticket_dict(t: Ticket, admin: bool = False) -> dict:
         "resolved_at": as_utc(t.resolved_at).isoformat() if t.resolved_at else None,
         "fix_verified": t.fix_verified,
         "observation": t.ai_observation,
+        "photo_id": next((p.id for p in t.photos if p.kind == "report"), None),
         "priority": civic.priority(t, now),
         "is_demo": t.is_demo,
     }

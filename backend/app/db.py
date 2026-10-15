@@ -72,7 +72,7 @@ class Photo(Base):
     upload_token: Mapped[str] = mapped_column(String(40), index=True, default="")
     kind: Mapped[str] = mapped_column(String(10), default="report")  # report | after
     mime: Mapped[str] = mapped_column(String(30), default="image/jpeg")
-    data: Mapped[bytes] = mapped_column(LargeBinary)
+    data: Mapped[bytes] = mapped_column(LargeBinary, deferred=True)  # loaded only when the image is served
     faces_blurred: Mapped[int] = mapped_column(Integer, default=0)
     analysis: Mapped[str] = mapped_column(Text, default="")  # AI result kept server-side until the report is filed
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

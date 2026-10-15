@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from . import ai, civic, images, seed, service
 from .auth import check_pw, clear_session, current_user, get_db, hash_pw, require_admin, set_session
@@ -103,8 +103,6 @@ def config():
     return {
         "city": "Ahmedabad",
         "ai_enabled": settings.ai_configured,
-        "ai_model": ai.status["model"],
-        "ai_provider": ai.PROVIDER_LABEL.get(settings.ai_provider, ""),
         "categories": [{"id": k, "label": v["label"], "dept": v["dept"]} for k, v in CATEGORIES.items()],
         "severities": SEVERITIES,
         "languages": [{"id": k, "label": v} for k, v in LANGUAGES.items()],
@@ -160,8 +158,6 @@ async def analyze(request: Request, photo: UploadFile = File(...), lat: float | 
         "ward": ward,
         "ai": result,
         "ai_error": ai_error,
-        "ai_model": ai.status["model"],
-        "ai_provider": ai.PROVIDER_LABEL.get(settings.ai_provider, ""),
         "duplicates": [{**service.ticket_dict(t), "distance_m": round(d)} for t, d in dups],
     }
 
@@ -192,6 +188,7 @@ class ReportIn(BaseModel):
     lang: str = "en"
     contact: str = Field("", max_length=120)
     merge_into: str = ""
+    force_new: bool = False  # citizen saw nearby matches and said theirs is different
 
 
 @app.post("/api/reports")
@@ -210,7 +207,7 @@ async def file_report(body: ReportIn, request: Request, db: Session = Depends(ge
     target = None
     if body.merge_into:
         target = db.scalar(select(Ticket).where(Ticket.code == body.merge_into, Ticket.status.in_(OPEN_STATUSES)))
-    if not target:
+    if not target and not body.force_new:
         dups = service.find_duplicates(db, body.lat, body.lng, body.category, limit=1)
         target = dups[0][0] if dups and dups[0][1] <= 25 else None
     if target:
@@ -301,7 +298,7 @@ def reopen(code: str, body: ReopenIn, request: Request, db: Session = Depends(ge
 @app.get("/api/public/tickets")
 def public_tickets(db: Session = Depends(get_db), days: int = Query(60, le=365)):
     since = utcnow() - timedelta(days=days)
-    rows = db.scalars(select(Ticket).where(Ticket.created_at >= since).order_by(Ticket.id.desc()).limit(1500)).all()
+    rows = db.scalars(select(Ticket).options(selectinload(Ticket.photos)).where(Ticket.created_at >= since).order_by(Ticket.id.desc()).limit(1500)).all()
     return [service.ticket_dict(t) for t in rows]
 
 
@@ -384,7 +381,7 @@ def admin_tickets(status: str = "open", department: str = "", zone: str = "", wa
     if q:
         like = f"%{q.strip()}%"
         stmt = stmt.where(Ticket.code.ilike(like) | Ticket.landmark.ilike(like) | Ticket.ward_name.ilike(like))
-    rows = db.scalars(stmt.order_by(Ticket.id.desc()).limit(1000)).all()
+    rows = db.scalars(stmt.options(selectinload(Ticket.photos)).order_by(Ticket.id.desc()).limit(1000)).all()
     out = [service.ticket_dict(t, admin=True) for t in rows]
     out.sort(key=lambda d: (-d["priority"], d["created_at"]))
     return out
@@ -581,8 +578,7 @@ def clear_demo(_: User = Depends(require_admin), db: Session = Depends(get_db)):
 
 @app.get("/api/admin/ai-status")
 def ai_status(_: User = Depends(current_user)):
-    return {"configured": settings.ai_configured, "provider": ai.PROVIDER_LABEL.get(settings.ai_provider, ""),
-            "region": settings.watsonx_url if settings.ai_provider == "watsonx" else "", **ai.status}
+    return {"configured": settings.ai_configured, "last_ok": ai.status["last_ok"], "last_error": ai.status["last_error"]}
 
 
 # ---------- single-page app ----------

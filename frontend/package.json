@@ -9,7 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "^5.1.0",
+    "@fontsource-variable/geist-mono": "^5.1.0",
+    "@fontsource/noto-sans-gujarati": "^5.1.0",
+    "@phosphor-icons/react": "^2.1.7",
     "leaflet": "1.9.4",
+    "motion": "^11.15.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-leaflet": "4.2.1",
