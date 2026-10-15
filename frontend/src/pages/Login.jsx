@@ -4,7 +4,8 @@ import { useApp } from "../App.jsx";
 import { api } from "../api.js";
 
 export default function Login() {
-  const { user, setUser } = useApp();
+  const { user, setUser, config } = useApp();
+  const demo = config?.demo_login;
   const nav = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,6 +29,12 @@ export default function Login() {
           <h1>Sign in</h1>
           <p className="muted">For ward offices, department teams and administrators.</p>
         </div>
+        {demo && (
+          <div className="notice stack" style={{ gap: 8 }}>
+            <p><strong>Demo login</strong><br /><span className="code">{demo.email}</span><br /><span className="code">{demo.password}</span></p>
+            <div><button type="button" className="btn sm" onClick={() => { setEmail(demo.email); setPassword(demo.password); }}>Fill in demo login</button></div>
+          </div>
+        )}
         <label className="field"><span>Email</span><input id="email" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} required /></label>
         <label className="field"><span>Password</span><input id="password" type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
         {error && <p className="error">{error}</p>}

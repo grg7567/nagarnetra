@@ -15,11 +15,5 @@ services:
         sync: false
       - key: WATSONX_URL
         value: https://us-south.ml.cloud.ibm.com
-      - key: ADMIN_EMAIL
-        value: admin@nagarnetra.app
-      - key: ADMIN_PASSWORD        # generated; read it in Render > Environment
-        generateValue: true
-      - key: SECRET_KEY
-        generateValue: true
       - key: SEED_DEMO
         value: "true"

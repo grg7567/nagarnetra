@@ -1,5 +1,4 @@
 import logging
-import secrets
 from datetime import timedelta
 
 from shapely.geometry import shape
@@ -17,14 +16,9 @@ log = logging.getLogger("nagarnetra")
 def ensure_admin(db: Session) -> None:
     if db.scalar(select(func.count(User.id))):
         return
-    pw = settings.admin_password or secrets.token_urlsafe(12)
-    db.add(User(email=settings.admin_email, name="Administrator", password_hash=hash_pw(pw), role="admin"))
+    db.add(User(email=settings.admin_email, name="Administrator", password_hash=hash_pw(settings.admin_password), role="admin"))
     db.commit()
-    if settings.admin_password:
-        log.info("Created admin account %s (password from ADMIN_PASSWORD).", settings.admin_email)
-    else:
-        log.warning("Created admin account %s with generated password: %s  (set ADMIN_PASSWORD to choose one)",
-                    settings.admin_email, pw)
+    log.info("Created admin account %s%s.", settings.admin_email, " with the demo password" if settings.demo_login else "")
 
 
 # (ward no, landmark, category, severity, days ago, status, report count, observation)

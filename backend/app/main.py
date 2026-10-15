@@ -108,6 +108,7 @@ def config():
         "severities": SEVERITIES,
         "languages": [{"id": k, "label": v} for k, v in LANGUAGES.items()],
         "bounds": civic.bounds(),
+        "demo_login": {"email": settings.admin_email, "password": settings.admin_password} if settings.demo_login else None,
     }
 
 

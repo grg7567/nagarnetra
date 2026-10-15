@@ -1,5 +1,5 @@
+import hashlib
 import os
-import secrets
 from pathlib import Path
 
 
@@ -15,11 +15,16 @@ def _db_url() -> str:
     return url
 
 
+DEMO_PASSWORD = "nagarnetra-demo"
+
+
 class Settings:
     database_url = _db_url()
-    secret_key = os.getenv("SECRET_KEY") or secrets.token_hex(32)
+    # Without SECRET_KEY, derive a stable one from the (secret) database URL so logins survive restarts.
+    secret_key = os.getenv("SECRET_KEY") or hashlib.sha256(("nagarnetra:" + database_url).encode()).hexdigest()
     admin_email = os.getenv("ADMIN_EMAIL", "admin@nagarnetra.app").strip().lower()
-    admin_password = os.getenv("ADMIN_PASSWORD", "")
+    admin_password = os.getenv("ADMIN_PASSWORD", "") or DEMO_PASSWORD
+    demo_login = not os.getenv("ADMIN_PASSWORD")  # show the demo login on the sign-in page
 
     watsonx_apikey = os.getenv("WATSONX_APIKEY", "").strip()
     watsonx_project_id = os.getenv("WATSONX_PROJECT_ID", "").strip()

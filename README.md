@@ -33,14 +33,14 @@ python -m venv .venv
 .venv/Scripts/pip install -r backend/requirements.txt      # macOS/Linux: .venv/bin/pip
 cd frontend && npm install && npm run build && cd ..
 cd backend
-STATIC_DIR=../frontend/dist ADMIN_PASSWORD=change-me ../.venv/Scripts/python -m uvicorn app.main:app --port 8000
+STATIC_DIR=../frontend/dist ../.venv/Scripts/python -m uvicorn app.main:app --port 8000
 ```
 
-Open http://localhost:8000. Officials sign in at `/admin` as `admin@nagarnetra.app` with the password you set. Without `DATABASE_URL` a local SQLite file is used. Without watsonx keys the app still works, and citizens choose the issue type themselves.
+Open http://localhost:8000. Officials sign in at `/admin` as `admin@nagarnetra.app` with password `nagarnetra-demo`. Without `DATABASE_URL` a local SQLite file is used. Without watsonx keys the app still works, and citizens choose the issue type themselves.
 
 For frontend development with hot reload, run `npm run dev` in `frontend/`. It proxies `/api` to port 8000.
 
-Tests: `cd backend && ../.venv/Scripts/python -m pytest -q`. To run the browser test against a running server: `.venv/Scripts/python tools/e2e_smoke.py http://localhost:8000 change-me`.
+Tests: `cd backend && ../.venv/Scripts/python -m pytest -q`. To run the browser test against a running server: `.venv/Scripts/python tools/e2e_smoke.py http://localhost:8000 nagarnetra-demo`.
 
 ## Deploy (about 30 minutes, free tiers)
 
@@ -62,7 +62,7 @@ If you use a region other than Dallas, set `WATSONX_URL` to match, for example `
 1. Push this folder to a GitHub repository.
 2. In Render, choose **New > Blueprint** and select the repository. Render reads `render.yaml`.
 3. Paste `DATABASE_URL`, `WATSONX_APIKEY` and `WATSONX_PROJECT_ID` when asked.
-4. After the first deploy, open **Environment** to read the generated `ADMIN_PASSWORD`. Sign in at `https://<your-app>.onrender.com/admin`.
+4. Sign in at `https://<your-app>.onrender.com/admin` with the demo login shown on that page.
 5. Check **Team > AI status**. It should show watsonx connected; the model name appears after the first photo is analysed.
 
 The free Render plan sleeps after 15 minutes idle, and the first visit after that takes about a minute. **The app keeps itself awake.** Every 10 minutes it pings its own public address, which Render provides as `RENDER_EXTERNAL_URL`. Set `KEEPALIVE=false` to turn this off. One always-on service fits inside Render's 750 free hours a month, so don't run a second free service on the same Render account. For a backup and email alerts if the site goes down, add a free [UptimeRobot](https://uptimerobot.com) HTTP monitor on `https://<your-app>.onrender.com/api/health` every 5 minutes. `/api/health` doesn't query the database, so a serverless database like Neon can still sleep between real visits. Escalations run hourly, and also whenever an official opens the dashboard.
@@ -75,8 +75,8 @@ The free Render plan sleeps after 15 minutes idle, and the first visit after tha
 | `WATSONX_APIKEY`, `WATSONX_PROJECT_ID` | For AI | IBM Cloud API key and watsonx project |
 | `WATSONX_URL` | No | Region endpoint (default Dallas) |
 | `WATSONX_MODEL` | No | Force a model ID instead of auto-picking |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | First start | First administrator account. If no password is set, a random one is printed in the log |
-| `SECRET_KEY` | In production | Signs login sessions |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | No | First administrator account. Without a password the demo login `admin@nagarnetra.app` / `nagarnetra-demo` is used and shown on the sign-in page. It only takes effect when the database has no accounts yet |
+| `SECRET_KEY` | No | Signs login sessions. Derived from `DATABASE_URL` if not set |
 | `KEEPALIVE`, `KEEPALIVE_URL` | No | Self-ping to stop free hosting from sleeping. On by default; uses Render's `RENDER_EXTERNAL_URL` unless `KEEPALIVE_URL` is set |
 | `SEED_DEMO` | No | `true` loads 14 example complaints on an empty database. Remove them from Team > Demo data |
 
