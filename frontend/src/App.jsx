@@ -72,7 +72,7 @@ export default function App() {
       </main>
       <footer className="wrap">
         <p>NagarNetra is an independent civic-tech project built for IBM SkillsBuild. It is not an official Ahmedabad Municipal Corporation service; complaints are routed to AMC departments inside this system.</p>
-        <p>Ward boundaries: DataMeet Municipal Spatial Data (CC BY-SA 2.5 IN). Map data © OpenStreetMap contributors. Photo analysis by IBM watsonx.ai.</p>
+        <p>Ward boundaries: DataMeet Municipal Spatial Data (CC BY-SA 2.5 IN). Map data © OpenStreetMap contributors.{config?.ai_provider ? ` Photo analysis by ${config.ai_provider}.` : ""}</p>
       </footer>
     </Ctx.Provider>
   );

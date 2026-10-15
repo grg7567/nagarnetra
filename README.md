@@ -72,7 +72,9 @@ The free Render plan sleeps after 15 minutes idle, and the first visit after tha
 | Variable | Needed | Purpose |
 |---|---|---|
 | `DATABASE_URL` | In production | Postgres URL. SQLite is used if empty |
-| `WATSONX_APIKEY`, `WATSONX_PROJECT_ID` | For AI | IBM Cloud API key and watsonx project |
+| `GEMINI_API_KEY` | For AI (option 1) | Google Gemini key from https://aistudio.google.com/apikey (free, no card). Used instead of watsonx when set |
+| `GEMINI_MODEL` | No | Default `gemini-flash-latest`, falling back to `gemini-2.5-flash` |
+| `WATSONX_APIKEY`, `WATSONX_PROJECT_ID` | For AI (option 2) | IBM Cloud API key and watsonx project |
 | `WATSONX_URL` | No | Region endpoint (default Dallas) |
 | `WATSONX_MODEL` | No | Force a model ID instead of auto-picking |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | No | First administrator account. Without a password the demo login `admin@nagarnetra.app` / `nagarnetra-demo` is used and shown on the sign-in page. It only takes effect when the database has no accounts yet |

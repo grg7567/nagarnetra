@@ -38,9 +38,21 @@ class Settings:
     cookie_secure = os.getenv("COOKIE_SECURE", "auto")
     static_dir = Path(os.getenv("STATIC_DIR", Path(__file__).resolve().parent.parent / "static"))
 
+    gemini_api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    gemini_model = os.getenv("GEMINI_MODEL", "gemini-flash-latest").strip()
+
+    @property
+    def ai_provider(self) -> str:
+        """'gemini' if a Gemini key is set, else 'watsonx' if IBM keys are set, else ''."""
+        if self.gemini_api_key:
+            return "gemini"
+        if self.watsonx_apikey and self.watsonx_project_id:
+            return "watsonx"
+        return ""
+
     @property
     def ai_configured(self) -> bool:
-        return bool(self.watsonx_apikey and self.watsonx_project_id)
+        return bool(self.ai_provider)
 
 
 settings = Settings()

@@ -76,8 +76,8 @@ export default function Team() {
         <h2>AI status</h2>
         {ai && (
           <dl className="kv">
-            <dt>watsonx.ai</dt><dd>{ai.configured ? "Connected" : "Not configured. Citizens choose the issue type themselves."}</dd>
-            <dt>Region</dt><dd>{ai.region}</dd>
+            <dt>Provider</dt><dd>{ai.configured ? ai.provider : "Not configured. Citizens choose the issue type themselves."}</dd>
+            {ai.region && <><dt>Region</dt><dd>{ai.region}</dd></>}
             <dt>Model</dt><dd>{ai.model || "Picked on first use"}</dd>
             <dt>Last success</dt><dd>{ai.last_ok ? fmtDate(new Date(ai.last_ok * 1000).toISOString()) : "None yet"}</dd>
             {ai.last_error && <><dt>Last error</dt><dd style={{ color: "var(--red)" }}>{ai.last_error}</dd></>}

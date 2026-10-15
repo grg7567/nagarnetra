@@ -1,7 +1,9 @@
-"""IBM watsonx.ai client: photo classification, complaint drafting and fix verification.
+"""AI client: photo classification, complaint drafting and fix verification.
 
-The vision model is picked automatically from watsonx's live catalog (IBM rotates models),
-preferring Granite Vision when the region offers it. Set WATSONX_MODEL to force one.
+Two providers behind one interface:
+- Google Gemini when GEMINI_API_KEY is set (free tier, no credit card).
+- IBM watsonx.ai when WATSONX_APIKEY + WATSONX_PROJECT_ID are set. The vision model is picked
+  from watsonx's live catalog (IBM rotates models), preferring Granite Vision. WATSONX_MODEL forces one.
 """
 import base64
 import json
@@ -74,9 +76,59 @@ async def _vision_model(client: httpx.AsyncClient) -> str:
     return best
 
 
+PROVIDER_LABEL = {"gemini": "Google Gemini", "watsonx": "IBM watsonx.ai"}
+GEMINI_FALLBACK = "gemini-2.5-flash"
+
+
 async def _chat(content: list | str, max_tokens: int = 900) -> str:
-    if not settings.ai_configured:
-        raise AIUnavailable("watsonx is not configured.")
+    """content: a prompt string, or [{"type": "text", ...}, {"type": "image_url", ...}] parts."""
+    if settings.ai_provider == "gemini":
+        return await _chat_gemini(content, max_tokens)
+    if settings.ai_provider == "watsonx":
+        return await _chat_watsonx(content, max_tokens)
+    raise AIUnavailable("No AI provider is configured.")
+
+
+async def _chat_gemini(content: list | str, max_tokens: int) -> str:
+    parts = []
+    for p in ([{"type": "text", "text": content}] if isinstance(content, str) else content):
+        if p["type"] == "text":
+            parts.append({"text": p["text"]})
+        else:
+            mime, b64 = p["image_url"]["url"][5:].split(";base64,", 1)
+            parts.append({"inline_data": {"mime_type": mime, "data": b64}})
+    body = {
+        "contents": [{"role": "user", "parts": parts}],
+        # Thinking tokens count toward the output limit on newer Flash models, so leave headroom.
+        "generationConfig": {"temperature": 0, "maxOutputTokens": max_tokens + 3000, "responseMimeType": "application/json"},
+    }
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(90, connect=15)) as client:
+            model = settings.gemini_model
+            for attempt in (model, GEMINI_FALLBACK):
+                r = await client.post(f"https://generativelanguage.googleapis.com/v1beta/models/{attempt}:generateContent",
+                                      headers={"x-goog-api-key": settings.gemini_api_key}, json=body)
+                if r.status_code != 404 or attempt == GEMINI_FALLBACK:
+                    break
+            if r.status_code != 200:
+                hint = " Check GEMINI_API_KEY." if r.status_code in (400, 401, 403) else ""
+                raise AIUnavailable(f"Gemini returned HTTP {r.status_code}.{hint} {r.text[:300]}")
+            status["model"] = attempt
+            cands = r.json().get("candidates") or []
+            text = "".join(p.get("text", "") for p in (cands[0].get("content", {}).get("parts", []) if cands else []))
+            if not text:
+                raise AIUnavailable("Gemini returned an empty answer (the photo may have been blocked by its safety filter).")
+            status.update(last_error="", last_ok=time.time())
+            return text
+    except AIUnavailable as e:
+        status["last_error"] = str(e)
+        raise
+    except Exception as e:
+        status["last_error"] = f"{type(e).__name__}: {e}"
+        raise AIUnavailable(status["last_error"]) from e
+
+
+async def _chat_watsonx(content: list | str, max_tokens: int = 900) -> str:
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(90, connect=15)) as client:
             token = await _iam_token(client)

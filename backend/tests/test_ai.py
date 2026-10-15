@@ -59,6 +59,32 @@ def test_analyze_with_watsonx(monkeypatch):
     assert "near Maninagar Station" in parts[0]["text"] and "Gujarati" in parts[0]["text"]
 
 
+def test_analyze_with_gemini(monkeypatch):
+    calls = []
+
+    def gemini(req: httpx.Request) -> httpx.Response:
+        calls.append(req.url.path)
+        assert req.headers["x-goog-api-key"] == "g-key"
+        if "gemini-flash-latest" in req.url.path:
+            return httpx.Response(404, json={"error": "not found"})  # alias missing -> fallback model
+        body = json.loads(req.content)
+        parts = body["contents"][0]["parts"]
+        assert "text" in parts[0] and parts[1]["inline_data"]["mime_type"] == "image/jpeg"
+        reply = {"is_civic_issue": True, "category": "pothole", "severity": "high", "confidence": 0.9,
+                 "observation": "Pothole.", "hazard": "Skids.", "complaint_en": "Sir, pothole.", "complaint_local": "ખાડો."}
+        return httpx.Response(200, json={"candidates": [{"content": {"parts": [{"text": json.dumps(reply, ensure_ascii=False)}]}}]})
+
+    class GeminiClient(httpx.AsyncClient):
+        def __init__(self, *a, **k):
+            super().__init__(*a, transport=httpx.MockTransport(gemini), **k)
+
+    monkeypatch.setattr(settings, "gemini_api_key", "g-key")
+    monkeypatch.setattr(ai.httpx, "AsyncClient", GeminiClient)
+    out = asyncio.run(ai.analyze(b"\xff\xd8x", {"no": 1, "name": "Gota", "zone": "North West"}, "", "", "gu"))
+    assert out["category"] == "pothole" and out["complaint_local"] == "ખાડો."
+    assert calls[-1].endswith("gemini-2.5-flash:generateContent") and ai.status["model"] == "gemini-2.5-flash"
+
+
 def test_bad_json_raises():
     try:
         ai._json("no json here")

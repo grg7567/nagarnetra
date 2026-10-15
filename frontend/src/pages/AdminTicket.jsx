@@ -68,7 +68,7 @@ export default function AdminTicket() {
               <dt>Reports</dt><dd>{t.report_count}</dd>
               <dt>Citizen contact</dt><dd>{t.contact || <span className="muted">Not given</span>}</dd>
               {t.citizen_note && <><dt>Citizen note</dt><dd>{t.citizen_note}</dd></>}
-              <dt>AI analysis</dt><dd>{t.ai_source === "watsonx" ? `watsonx.ai · ${Math.round((t.ai_confidence || 0) * 100)}% confidence` : "Classified by the citizen"}</dd>
+              <dt>AI analysis</dt><dd>{t.ai_source === "manual" ? "Classified by the citizen" : `${t.ai_source === "gemini" ? "Google Gemini" : t.ai_source === "watsonx" ? "IBM watsonx.ai" : "AI (demo data)"} · ${Math.round((t.ai_confidence || 0) * 100)}% confidence`}</dd>
               {t.observation && <><dt>Observed</dt><dd>{t.observation}</dd></>}
               {t.hazard && <><dt>Risk</dt><dd>{t.hazard}</dd></>}
             </dl>

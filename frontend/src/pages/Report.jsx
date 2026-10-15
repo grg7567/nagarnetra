@@ -186,7 +186,7 @@ export default function Report() {
           <div className="stack" style={{ gap: 14 }}>
             {ai && ai.is_civic_issue !== false && (
               <div className="ai-card">
-                <span className="tag">watsonx.ai · {analysis.ai_model || "vision model"}</span>
+                <span className="tag">{analysis.ai_provider || "AI"} · {analysis.ai_model || "vision model"}</span>
                 <p><strong>{config.categories.find(c => c.id === ai.category)?.label}</strong> · <SevPill s={ai.severity} /> · {Math.round(ai.confidence * 100)}% sure</p>
                 {ai.observation && <p>{ai.observation}</p>}
                 {ai.hazard && <p className="muted">{ai.hazard}</p>}

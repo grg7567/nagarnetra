@@ -103,7 +103,8 @@ def config():
     return {
         "city": "Ahmedabad",
         "ai_enabled": settings.ai_configured,
-        "ai_model": ai.status["model"] or settings.watsonx_model,
+        "ai_model": ai.status["model"],
+        "ai_provider": ai.PROVIDER_LABEL.get(settings.ai_provider, ""),
         "categories": [{"id": k, "label": v["label"], "dept": v["dept"]} for k, v in CATEGORIES.items()],
         "severities": SEVERITIES,
         "languages": [{"id": k, "label": v} for k, v in LANGUAGES.items()],
@@ -160,6 +161,7 @@ async def analyze(request: Request, photo: UploadFile = File(...), lat: float | 
         "ai": result,
         "ai_error": ai_error,
         "ai_model": ai.status["model"],
+        "ai_provider": ai.PROVIDER_LABEL.get(settings.ai_provider, ""),
         "duplicates": [{**service.ticket_dict(t), "distance_m": round(d)} for t, d in dups],
     }
 
@@ -223,7 +225,7 @@ async def file_report(body: ReportIn, request: Request, db: Session = Depends(ge
                due_at=civic.due_date(body.category, body.severity, now), created_at=now)
     ai_used = bool(analysis) and analysis.get("category") == body.category
     if analysis:
-        t.ai_source = "watsonx"
+        t.ai_source = settings.ai_provider
         t.ai_confidence = analysis.get("confidence")
         t.ai_observation = analysis.get("observation", "")
         t.ai_hazard = analysis.get("hazard", "")
@@ -579,7 +581,8 @@ def clear_demo(_: User = Depends(require_admin), db: Session = Depends(get_db)):
 
 @app.get("/api/admin/ai-status")
 def ai_status(_: User = Depends(current_user)):
-    return {"configured": settings.ai_configured, "region": settings.watsonx_url, **ai.status}
+    return {"configured": settings.ai_configured, "provider": ai.PROVIDER_LABEL.get(settings.ai_provider, ""),
+            "region": settings.watsonx_url if settings.ai_provider == "watsonx" else "", **ai.status}
 
 
 # ---------- single-page app ----------

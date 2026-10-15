@@ -53,7 +53,7 @@ def seed_demo(db: Session) -> None:
         created = now - timedelta(days=ago, hours=3 + i)
         t = Ticket(code=f"TMP-{i}", category=cat, severity=sev, status=status, lat=round(pt.y, 6), lng=round(pt.x, 6),
                    ward_no=no, ward_name=ward["name"], zone=ward["zone"], department=civic.CATEGORIES[cat]["dept"],
-                   landmark=landmark, language="gu", report_count=reports, ai_source="watsonx", ai_confidence=0.9,
+                   landmark=landmark, language="gu", report_count=reports, ai_source="demo", ai_confidence=0.9,
                    ai_observation=obs, ai_hazard="", due_at=civic.due_date(cat, sev, created), created_at=created, is_demo=True)
         db.add(t)
         db.flush()
